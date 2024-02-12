@@ -29,8 +29,39 @@ def find_peak(hist):
             peak_index = i
     return peak_index
 
-#def binaryMorphology(img):
-    
+#binary morphology
+def binaryMorphology(img):
+    kernel = np.ones((3, 3), np.uint8) #structuring element
+
+    dilated_img = dilate(img, kernel)
+    closed_img = erode(dilated_img, kernel)
+
+    return closed_img
+
+
+#dilate img
+def dilate(img, kernel):
+    dilated_img = np.zeros_like(img)
+    for y in range(1, img.shape[0] - 1):
+
+        for x in range(1, img.shape[1] - 1):
+            #where at least one element has to be true
+            if np.any(img[y - 1:y + 2, x - 1:x + 2] == 255):
+                dilated_img[y, x] = 255
+
+    return dilated_img
+
+#erode img
+def erode(img, kernel):
+    eroded_img = np.zeros_like(img)
+    for y in range(1, img.shape[0] - 1):
+
+        for x in range(1, img.shape[1] - 1):
+            #all elements have to be true
+            if np.all(img[y - 1:y + 2, x - 1:x + 2] == 255):
+                eroded_img[y, x] = 255
+
+    return eroded_img
 
                 
 #read in an image into memory
@@ -46,6 +77,10 @@ for i in range(1,16):
     img = cv.cvtColor(img,cv.COLOR_GRAY2BGR)
     cv.putText(img,str(thresh),(10,30),cv.FONT_HERSHEY_SIMPLEX,1.0,(0,255,0),thickness=2)
     cv.imshow('thresholded image',img)
+
+    binImage = binaryMorphology(img)
+    cv.imshow("bin Image", binImage)
+
     cv.waitKey()
     plt.plot(hist)
     plt.show()
