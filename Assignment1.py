@@ -65,34 +65,36 @@ def erode(img, kernel):
     return eroded_img
 
 
-# Connected Component Labelling - Algorithm
-def connected_component_labelling(img):
-    curlab = 1
-    goTo = 2
+def connected_component_labeling(binary_image):
+    # Perform connected component labeling
+    labels = np.zeros_like(binary_image)
+    label = 1  # Start labeling from 1
+    for i in range(binary_image.shape[0]):
+        for j in range(binary_image.shape[1]):
+            if binary_image[i, j] == 255 and labels[i, j] == 0:
+                dfs(binary_image, labels, i, j, label)
+                label += 1
 
-    height, width = img.shape[:2]  # Assuming img is a 2D array
+    return labels
 
-    # Define a queue for pixels to be processed
-    queue = []
 
-    # Function to check if a pixel is within image bounds and is a foreground pixel
-    def is_foreground_pixel(y, x):
-        return 0 <= y < height and 0 <= x < width and img[y, x] == 255
 
-    # Iterate over each pixel in the image
-    for y in range(height):
-        for x in range(width):
-            # If the pixel is a foreground pixel and not already labelled
-            #if is_foreground_pixel(y, x):
-                #img[y, x] = curlab  # Label the pixel with curlab
-                #queue.append((y, x))  # Add pixel coordinates to the queue
 
-                # Process pixels in the queue
-                
+def dfs(binary_image, labels, i, j, label):
+    stack = [(i, j)]
+    
+    while stack:
+        i, j = stack.pop()
+        if i < 0 or i >= binary_image.shape[0] or j < 0 or j >= binary_image.shape[1]:
+            continue
+        if binary_image[i][j] == 0 or labels[i][j] > 0:
+            continue
+        
+        labels[i][j] = label
+        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            stack.append((i + dx, j + dy))
 
-                 curlab += 1  # Increment curlab for the next connected component
 
-    return curlab
 
 
                 
@@ -114,8 +116,15 @@ for i in range(1,16):
     cv.imshow("bin Image", binImage)
 
 
-    #connected compound labeling
-    connected_component_labelling(binImage)
+    # Perform connected component labeling
+    labels = connected_component_labeling(binImage)
+
+
+    if labels is None:
+        print("Error: Connected component labeling failed.")
+    else:
+        # Display the labeled image
+        cv.imshow('Labeled Image', labels.astype(np.uint8) * 50)  # Scale for better visualization
 
     cv.waitKey()
     plt.plot(hist)
