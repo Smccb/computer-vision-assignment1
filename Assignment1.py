@@ -31,8 +31,9 @@ def find_peak(hist):
 
 #binary morphology
 def binaryMorphology(img):
-    kernel = np.ones((3, 3), np.uint8) #structuring element
+    kernel = np.ones((3, 3), np.uint8) #structuring element using square
 
+    #closing image
     dilated_img = dilate(img, kernel)
     closed_img = erode(dilated_img, kernel)
 
@@ -63,6 +64,37 @@ def erode(img, kernel):
 
     return eroded_img
 
+
+# Connected Component Labelling - Algorithm
+def connected_component_labelling(img):
+    curlab = 1
+    goTo = 2
+
+    height, width = img.shape[:2]  # Assuming img is a 2D array
+
+    # Define a queue for pixels to be processed
+    queue = []
+
+    # Function to check if a pixel is within image bounds and is a foreground pixel
+    def is_foreground_pixel(y, x):
+        return 0 <= y < height and 0 <= x < width and img[y, x] == 255
+
+    # Iterate over each pixel in the image
+    for y in range(height):
+        for x in range(width):
+            # If the pixel is a foreground pixel and not already labelled
+            #if is_foreground_pixel(y, x):
+                #img[y, x] = curlab  # Label the pixel with curlab
+                #queue.append((y, x))  # Add pixel coordinates to the queue
+
+                # Process pixels in the queue
+                
+
+                 curlab += 1  # Increment curlab for the next connected component
+
+    return curlab
+
+
                 
 #read in an image into memory
 for i in range(1,16):
@@ -80,6 +112,10 @@ for i in range(1,16):
 
     binImage = binaryMorphology(img)
     cv.imshow("bin Image", binImage)
+
+
+    #connected compound labeling
+    connected_component_labelling(binImage)
 
     cv.waitKey()
     plt.plot(hist)
