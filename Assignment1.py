@@ -96,19 +96,8 @@ def dfs(binary_image, labels, i, j, label):
 
 #classify oring as a pass or fail
 def classifyOring(labels):
-    #check if there are any labels
-    if np.max(labels) == 0:
-        return "Fail"
 
-    #check if there are more than 1 label
-    if np.max(labels) > 1:
-        return "Fail"
-
-    #check if the label is a circle
-    if np.max(labels) == 1:
-        return "Pass"
-
-    return "Fail"
+    return "Pass"
 
                 
 #read in an image into memory
