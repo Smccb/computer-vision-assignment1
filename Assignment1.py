@@ -12,6 +12,8 @@ def threshold(img,thresh):
                 img[y,x] = 255
             else:
                 img[y,x] = 0
+    
+    return img
 
 def imhist(img):
     hist = np.zeros(256)
@@ -56,7 +58,6 @@ def dilate(img, kernel):
 def erode(img, kernel):
     eroded_img = np.zeros_like(img)
     for y in range(1, img.shape[0] - 1):
-
         for x in range(1, img.shape[1] - 1):
             #all elements have to be true
             if np.all(img[y - 1:y + 2, x - 1:x + 2] == 255):
@@ -64,67 +65,83 @@ def erode(img, kernel):
 
     return eroded_img
 
+#connected component labeling
+def connectedComponentLabeling(image, thresh) :
+    #convert the image to binary using a threshold
+    binary_image = (image > thresh).astype(np.uint8) ##idk if I can do this this way???
 
-def connected_component_labeling(binary_image):
-    # Perform connected component labeling
     labels = np.zeros_like(binary_image)
-    label = 1  # Start labeling from 1
+    label = 1  #start labeling from 1
     for i in range(binary_image.shape[0]):
         for j in range(binary_image.shape[1]):
-            if binary_image[i, j] == 255 and labels[i, j] == 0:
+            if binary_image[i][j] == 1 and labels[i][j] == 0:
                 dfs(binary_image, labels, i, j, label)
                 label += 1
 
     return labels
 
-
-
-
+#search for connected pixels
 def dfs(binary_image, labels, i, j, label):
     stack = [(i, j)]
-    
     while stack:
         i, j = stack.pop()
-        if i < 0 or i >= binary_image.shape[0] or j < 0 or j >= binary_image.shape[1]:
-            continue
-        if binary_image[i][j] == 0 or labels[i][j] > 0:
-            continue
-        
-        labels[i][j] = label
-        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-            stack.append((i + dx, j + dy))
+
+        if 0 <= i < binary_image.shape[0] and 0 <= j < binary_image.shape[1]:
+            if binary_image[i][j] == 1 and labels[i][j] == 0:
+                labels[i][j] = label
+
+                for x, y in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                    stack.append((i + x, j + y))
 
 
+#classify oring as a pass or fail
+def classifyOring(labels):
+    #check if there are any labels
+    if np.max(labels) == 0:
+        return "Fail"
 
+    #check if there are more than 1 label
+    if np.max(labels) > 1:
+        return "Fail"
+
+    #check if the label is a circle
+    if np.max(labels) == 1:
+        return "Pass"
+
+    return "Fail"
 
                 
 #read in an image into memory
 for i in range(1,16):
     img = cv.imread('Orings/Oring' + str(i) +'.jpg',0)
     hist = imhist(img)
-    #thresh = np.argmax(hist)-70
+
+    #finding threshold, and add it to image
     thresh = find_peak(hist)-70
     print(thresh)
     cv.imshow('original image',img)
-    #thresh = 100
-    threshold(img,thresh)
-    img = cv.cvtColor(img,cv.COLOR_GRAY2BGR)
+    thresh_img = threshold(img,thresh)
+    img = cv.cvtColor(thresh_img,cv.COLOR_GRAY2BGR)
     cv.putText(img,str(thresh),(10,30),cv.FONT_HERSHEY_SIMPLEX,1.0,(0,255,0),thickness=2)
     cv.imshow('thresholded image',img)
 
-    binImage = binaryMorphology(img)
+    #binary morphology called and displayed
+    binImage = binaryMorphology(thresh_img)
     cv.imshow("bin Image", binImage)
 
-
     # Perform connected component labeling
-    labels = connected_component_labeling(binImage)
+    labels = connectedComponentLabeling(binImage, thresh)
 
-
+    #check if connected component labeling returned null
     if labels is None:
         print("Error: Connected component labeling failed.")
     else:
-        # Display the labeled image
-        cv.imshow('Labeled Image', labels.astype(np.uint8) * 50)  # Scale for better visualization
+        cv.imshow('Labeled Image', labels.astype(np.uint8) * 100) # *100 controls visiblity for the labels, can be set to anything
+
+
+    #classify the oring
+    classification = classifyOring(labels)
+    print("Oring " + str(i) + " is a " + classification)
 
     cv.waitKey()
     plt.plot(hist)
