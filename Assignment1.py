@@ -31,44 +31,44 @@ def find_peak(hist):
             peak_index = i
     return peak_index
 
-#binary morphology
+# binary morphology
 def binaryMorphology(img):
-    #closing image
+    # closing image
     dilated_img = dilate(img)
     closed_img = erode(dilated_img)
 
     return closed_img
 
-#dilate img
+# dilate img
 def dilate(img):
     dilated_img = np.zeros_like(img)
     for y in range(1, img.shape[0] - 1):
 
         for x in range(1, img.shape[1] - 1):
-            #where at least one element has to be true
+            # where at least one element has to be true
             if np.any(img[y - 1:y + 2, x - 1:x + 2] == 255):
                 dilated_img[y, x] = 255
 
     return dilated_img
 
-#erode img
+# erode img
 def erode(img):
     eroded_img = np.zeros_like(img)
     for y in range(1, img.shape[0] - 1):
         for x in range(1, img.shape[1] - 1):
-            #all elements have to be true
+            # all elements have to be true
             if np.all(img[y - 1:y + 2, x - 1:x + 2] == 255):
                 eroded_img[y, x] = 255
 
     return eroded_img
 
-#connected component labeling - uses lecture 2 slide 32
+# connected component labeling - uses lecture 2 slide 32
 def connectedComponentLabeling(image, thresh) :
-    #convert the image to binary using a threshold
+    # convert the image to binary using a threshold
     binary_image = (image > thresh).astype(np.uint8)
 
     labels = np.zeros_like(binary_image)
-    curLab = 1  #start labeling from 1
+    curLab = 1  # start labeling from 1
     for i in range(binary_image.shape[0]):
         for j in range(binary_image.shape[1]):
             if binary_image[i][j] == 1 and labels[i][j] == 0:
@@ -77,7 +77,7 @@ def connectedComponentLabeling(image, thresh) :
 
     return labels
 
-#check neighbours
+# check neighbours
 def dfs(binary_image, labels, i, j, curLab):
     stack = [(i, j)]
     while stack:
@@ -94,10 +94,9 @@ def dfs(binary_image, labels, i, j, curLab):
 
 
 def classifyOring(labels, thresh):
-    # Extract the foreground object
-    foreground_label = 1  # Assuming the foreground is labeled with 1
+    foreground_label = 1
 
-    # Calculate area and perimeter
+    # calculate area and perimeter
     foreground_area, foreground_perimeter = calculate_area_and_perimeter(labels, foreground_label)
 
     print("Area of the foreground object:", foreground_area)
@@ -106,41 +105,30 @@ def classifyOring(labels, thresh):
     circularity = (4 * np.pi * foreground_area) / (foreground_perimeter ** 2)
     print("Circularity:", circularity)
 
-    circThresh = 0.19  # Adjust threshold as needed
+    circThresh = 0.19  # thresh, can be adjusted
 
     if circularity >= circThresh:
         return "Pass"
     else:
         return "Fail"
 
-# Function to calculate area and perimeter
+
 def calculate_area_and_perimeter(labels, foreground_label):
     foreground_area = np.sum(labels == foreground_label)
-
-    
-    # foreground_area = 0
-
-    # # Iterate over each pixel in the labeled image
-    # for i in range(1, labels.shape[0] - 1):
-    #     for j in range(1, labels.shape[1] - 1):
-    #         # Check if the pixel belongs to the foreground object (where the label is white)
-    #         if labels[i, j] == foreground_label:
-    #             foreground_area += 1  # Increment the area counter
-
     perimeter = calculate_perimeter(labels, foreground_label)
 
     return foreground_area, perimeter
 
 
 def calculate_perimeter(labels, foreground_label):
-    # Create a copy of the labeled image to store the perimeter mask
+    # create a copy of the labeled image to store the perimeter mask
     perimeter_mask = np.zeros_like(labels, dtype=np.uint8)
     perimeter = 0
 
-    # Iterate over each pixel in the labeled image
+    # iterate over each pixel
     for i in range(1, labels.shape[0] - 1):
         for j in range(1, labels.shape[1] - 1):
-            # Check if the pixel is part of the foreground component and has at least one background neighbor
+            # check if the pixel is part of the foreground component and has at least one background neighbor
             if labels[i, j] == foreground_label and (labels[i-1, j] != foreground_label or
                                                     labels[i+1, j] != foreground_label or
                                                     labels[i, j-1] != foreground_label or
@@ -148,7 +136,7 @@ def calculate_perimeter(labels, foreground_label):
                 perimeter_mask[i, j] = 255
                 perimeter += 1
 
-    # Display the perimeter mask
+    # show the perimeter mask
     cv.imshow('Perimeter Mask', perimeter_mask)
 
     return perimeter
@@ -156,45 +144,42 @@ def calculate_perimeter(labels, foreground_label):
 
 
 def visualize_labeled_image(labels):
-    # Get unique labels (excluding background label)
+    # get unique labels only count forground labels
     unique_labels = np.unique(labels)[1:]
 
-    # Create a color map for visualizing each connected component
     color_map = {label: np.random.randint(0, 255, 3) for label in unique_labels}
 
-    # Create a color image for visualization
     colored_image = np.zeros((labels.shape[0], labels.shape[1], 3), dtype=np.uint8)
 
-    # Assign colors to each connected component
     for label in unique_labels:
         colored_image[labels == label] = color_map[label]
 
-    # Display the colored image
+    # show the colored image
     cv.imshow('Colored Labeled Image', colored_image)
 
                 
-#read in an image into memory
+# read in an image into memory
 for i in range(1,16):
     start_time = time.time()
     img = cv.imread('Orings/Oring' + str(i) +'.jpg',0)
     hist = imhist(img)
 
-    #finding threshold, and add it to image
+    # finding threshold, and add it to image
     thresh = find_peak(hist)-70
     print(thresh)
     
     thresh_img = threshold(img,thresh)
     
-    #binary morphology called and displayed
+    # binary morphology called and displayed
     binImage = binaryMorphology(thresh_img)
 
-    # Perform connected component labeling
+    # connected component labeling
     labels = connectedComponentLabeling(binImage, thresh)
 
-    #classify the oring
+    # classify the oring
     classification = classifyOring(labels, thresh)
 
-    # End measuring time after image processing
+    # End measuring time
     end_time = time.time()
     processing_time = end_time - start_time
     processing_time_str = f"Processing Time: {processing_time:.2f} seconds"
@@ -208,11 +193,11 @@ for i in range(1,16):
     cv.imshow('thresholded image',img)
     cv.imshow("bin Image", binImage)
 
-    #check if connected component labeling returned null
+    # check if connected component labeling returned null
     if labels is None:
         print("Error: Connected component labeling failed.")
     else:
-        #cv.imshow('Labeled Image', labels.astype(np.uint8) * 100) # *100 controls visiblity for the labels, can be set to anything
+        # cv.imshow('Labeled Image', labels.astype(np.uint8) * 100) # *100 controls visiblity for the labels, can be set to anything
         visualize_labeled_image(labels)
     
 
